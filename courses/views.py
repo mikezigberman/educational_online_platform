@@ -15,11 +15,20 @@ from .forms import ModuleFormSet
 from .models import Course
 from .models import Module, Content
 from .models import Subject
+class ManageCourseListView(ListView):
+    model = Course
+    template_name = 'courses/manage/course/list.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(owner=self.request.user)
+
 
 class OwnerMixin:
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(owner=self.request.user)
+
 
 class OwnerEditMixin:
     def form_valid(self, form):
@@ -38,11 +47,6 @@ class ManageCourseListView(OwnerCourseMixin, ListView):
     template_name = 'courses/manage/course/list.html'
     permission_required = 'courses.view_course'
 
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(owner=self.request.user)
-
 class CourseCreateView(OwnerCourseEditMixin, CreateView):
     permission_required = 'courses.add_course'
 
@@ -58,7 +62,7 @@ class CourseModuleUpdateView(TemplateResponseMixin, View):
     course = None
 
     def get_formset(self, data=None):
-        return ModuleFormSet(instance=self.course, data=data)
+        return ModuleFormSet(instance=self.course,data=data)
 
     def dispatch(self, request, pk):
         self.course = get_object_or_404(Course, id=pk, owner=request.user)
@@ -132,13 +136,13 @@ class ModuleContentListView(TemplateResponseMixin, View):
         return self.render_to_response({'module': module})
 
 class ModuleOrderView(CsrfExemptMixin, JsonRequestResponseMixin, View):
-
     def post(self, request):
         for id, order in self.request_json.items():
             Module.objects.filter(id=id, course__owner=request.user).update(order=order)
         return self.render_json_response({'saved': 'OK'})
 
 class ContentOrderView(CsrfExemptMixin, JsonRequestResponseMixin, View):
+
     def post(self, request):
         for id, order in self.request_json.items():
             Content.objects.filter(id=id, module__course__owner=request.user).update(order=order)
@@ -147,7 +151,7 @@ class ContentOrderView(CsrfExemptMixin, JsonRequestResponseMixin, View):
 class CourseListView(TemplateResponseMixin, View):
     model = Course
     template_name = 'courses/course/list.html'
-    
+
     def get(self, request, subject=None):
         subjects = cache.get('all_subjects')
         if not subjects:
@@ -166,7 +170,7 @@ class CourseListView(TemplateResponseMixin, View):
             if not courses:
                 courses = all_courses
                 cache.set('all_courses', courses)
-        return self.render_to_response({'subjects': subjects, 'subject': subject, 'courses': courses})
+        return self.render_to_response({'subjects': subjects, 'subject': subject,'courses': courses})
 
 class CourseDetailView(DetailView):
     model = Course
