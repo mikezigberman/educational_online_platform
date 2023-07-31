@@ -16,6 +16,7 @@ from .models import Course
 from .models import Module, Content
 from .models import Subject
 
+
 class ManageCourseListView(ListView):
     model = Course
     template_name = 'courses/manage/course/list.html'
@@ -92,7 +93,10 @@ class ContentCreateUpdateView(TemplateResponseMixin, View):
         return None
 
     def get_form(self, model, *args, **kwargs):
-        Form = modelform_factory(model, exclude=['owner', 'order', 'created', 'updated'])
+        Form = modelform_factory(model, exclude=['owner',
+                                                 'order',
+                                                 'created',
+                                                 'updated'])
         return Form(*args, **kwargs)
 
     def dispatch(self, request, module_id, model_name, id=None):
